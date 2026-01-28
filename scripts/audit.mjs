@@ -1,18 +1,27 @@
 #!/usr/bin/env node
 /**
- * skill-issue audit — read-only skill auditor for Clawdbot
+ * skill-issue audit — read-only skill auditor for AI agents
  * Scans installed skills, checks usage, health, hub versions, and produces a markdown report.
+ *
+ * Works with Clawdbot, Claude Code, or any system using SKILL.md files.
+ *
+ * Configuration via environment variables:
+ *   SKILL_DIRS  — Comma-separated directories to scan (default: ./skills)
+ *   MEMORY_DIR  — Directory with dated .md logs for usage tracking (default: ./memory)
+ *   AUDIT_DAYS  — Days back to scan for usage (default: 7)
  */
 
 import { readdir, readFile, stat } from "node:fs/promises";
-import { join, basename } from "node:path";
+import { join, basename, resolve } from "node:path";
 import { execSync } from "node:child_process";
 import { homedir } from "node:os";
 
 // --- Configuration ---
-const SYSTEM_SKILLS_DIR = "/opt/homebrew/lib/node_modules/clawdbot/skills";
-const WORKSPACE_SKILLS_DIR = join(homedir(), "clawd", "skills");
-const MEMORY_DIR = join(homedir(), "clawd", "memory");
+const DEFAULT_SKILL_DIRS = [resolve("./skills")];
+const SKILL_DIRS = process.env.SKILL_DIRS
+  ? process.env.SKILL_DIRS.split(",").map((d) => resolve(d.trim()))
+  : DEFAULT_SKILL_DIRS;
+const MEMORY_DIR = resolve(process.env.MEMORY_DIR || "./memory");
 const DAYS_BACK = parseInt(process.env.AUDIT_DAYS || "7", 10);
 
 // --- Helpers ---
@@ -165,17 +174,14 @@ async function main() {
   const now = new Date();
   const timestamp = now.toISOString().replace("T", " ").slice(0, 19);
 
-  // Collect skills
-  const systemSkills = await getSkillsFromDir(SYSTEM_SKILLS_DIR);
-  const workspaceSkills = await getSkillsFromDir(WORKSPACE_SKILLS_DIR);
-
-  // Merge (workspace overrides system)
+  // Collect skills from all configured directories
   const skillMap = new Map();
-  for (const s of systemSkills) {
-    skillMap.set(s.dirName, { ...s, source: "system" });
-  }
-  for (const s of workspaceSkills) {
-    skillMap.set(s.dirName, { ...s, source: "workspace" });
+  for (const dir of SKILL_DIRS) {
+    const dirLabel = dir.replace(homedir(), "~");
+    const skills = await getSkillsFromDir(dir);
+    for (const s of skills) {
+      skillMap.set(s.dirName, { ...s, source: dirLabel });
+    }
   }
 
   const allSkills = [...skillMap.values()].sort((a, b) => a.dirName.localeCompare(b.dirName));

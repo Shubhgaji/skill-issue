@@ -1,72 +1,42 @@
 ---
 name: skill-issue
-description: "Audit and review all installed Clawdbot skills. Run on-demand or via cron to get a health report: skill inventory, usage tracking, version checks against ClawdHub, dependency health, and actionable recommendations (keep, update, review, remove). Use when asked to review skills, check for skill updates, find unused skills, or audit the skill ecosystem."
+description: "Audit and review all installed agent skills. Run on-demand or via cron to get a health report: skill inventory, usage tracking, version checks, dependency health, and actionable recommendations (keep, update, review, remove). Use when asked to review skills, check for skill updates, find unused skills, or audit the skill ecosystem."
 ---
 
 # Skill Issue — Skill Auditor
 
-Audit all installed Clawdbot skills and produce a markdown report with recommendations.
+Audit all installed skills and produce a markdown report with recommendations.
 
 ## Quick Start
 
-Run the audit script:
 ```bash
-bash ~/clawd/skills/skill-issue/scripts/audit.sh
+# Basic — scans ./skills and ./memory
+node scripts/audit.mjs
+
+# Custom directories
+SKILL_DIRS="./skills,/path/to/more/skills" MEMORY_DIR="./memory" node scripts/audit.mjs
+
+# Save report
+node scripts/audit.mjs > /tmp/skill-audit-report.md
 ```
 
-The script outputs a markdown report to stdout. To save:
-```bash
-bash ~/clawd/skills/skill-issue/scripts/audit.sh > /tmp/skill-audit-report.md
-```
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SKILL_DIRS` | `./skills` | Comma-separated skill directories to scan |
+| `MEMORY_DIR` | `./memory` | Dated markdown logs for usage tracking |
+| `AUDIT_DAYS` | `7` | Days back to scan for usage |
 
 ## What It Checks
 
-1. **Inventory** — Lists every installed skill (system + workspace) with name, description, emoji, and required binaries
-2. **Usage** — Scans recent memory files and session logs for skill name mentions to gauge activity
-3. **Version** — Compares installed skills against ClawdHub registry (requires `clawdhub` CLI)
-4. **Health** — Verifies required binaries (`requires.bins`) and env vars (`requires.env`) are available
-5. **Recommendations** — Categorizes each skill:
-   - **keep** — Active and healthy
-   - **update** — Outdated (newer version on ClawdHub)
-   - **review** — Unused (no recent mentions in memory/logs)
-   - **remove** — Broken (missing required dependencies)
-
-## Output Format
-
-Clean markdown tables suitable for chat or GitHub README. Example:
-
-```
-| Skill | Status | Version | Health | Recommendation |
-|-------|--------|---------|--------|----------------|
-| weather | active | 1.0.0 ✓ | ✅ healthy | keep |
-| sag | unused | 1.0.0 ✓ | ⚠️ missing env | review |
-```
-
-## Cron Usage
-
-Schedule via Clawdbot cron to run weekly:
-```
-Run skill audit: bash ~/clawd/skills/skill-issue/scripts/audit.sh > ~/clawd/memory/skill-audit-latest.md
-```
+1. **Inventory** — Finds every subdirectory containing a `SKILL.md` with YAML frontmatter
+2. **Usage** — Scans recent memory/log files for skill name mentions
+3. **Health** — Verifies required binaries (`requires.bins`) and env vars (`requires.env`)
+4. **Versions** — Checks ClawdHub registry if `clawdhub` CLI is available
+5. **Recommendations** — keep (active+healthy), update (outdated), review (unused), remove (broken deps)
 
 ## Safety
 
-- **Read-only** — The audit script only reads SKILL.md files, checks `which` for binaries, and queries ClawdHub. It never modifies, installs, or removes anything.
-- **No destructive actions** — Recommendations are advisory only. Always confirm before acting on remove/update suggestions.
-
-## Manual Actions (after reviewing the report)
-
-Update a skill:
-```bash
-clawdhub update <skill-name>
-```
-
-Update all outdated skills:
-```bash
-clawdhub update --all
-```
-
-Remove a skill (requires confirmation):
-```bash
-rm -ri /opt/homebrew/lib/node_modules/clawdbot/skills/<skill-name>
-```
+- **Read-only** — Never modifies, installs, or removes anything
+- **Advisory only** — Recommendations require manual action
