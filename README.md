@@ -1,6 +1,6 @@
 # 🔍 skill-issue
 
-A Claude Code skill that audits and reviews all your installed agent skills. HR department for your AI agent.
+An agent skill that audits all your other agent skills. HR department for AI agents.
 
 **Find the skill issues before they find you.**
 
@@ -10,91 +10,74 @@ A Claude Code skill that audits and reviews all your installed agent skills. HR 
 
 ## What It Does
 
-- **Inventories** every installed skill across configured directories
-- **Tracks usage** by scanning recent markdown logs for skill mentions
+- **Inventories** every installed skill across your project
+- **Tracks usage** by scanning recent logs for skill mentions
 - **Checks health** — verifies required binaries and environment variables
-- **Checks versions** against ClawdHub registry (if available)
 - **Recommends action** — keep, update, review, or remove
 
-## Install
-
-Drop into your Claude Code project's skills directory:
+## Quick Start
 
 ```bash
-# Clone it
 git clone https://github.com/krispuckett/skill-issue.git
+cd skill-issue
 
-# Or copy into your project
-cp -r skill-issue/ ~/your-project/skills/skill-issue/
+# Point it at your skills directory
+SKILL_DIRS="../my-project/skills" node scripts/audit.mjs
 ```
 
-### Clawdbot Users
-
-```bash
-# Via ClawdHub
-clawdhub install skill-issue
-
-# Or manually
-cp -r skill-issue/ ~/clawd/skills/skill-issue/
-```
+That's it. Any directory containing subdirectories with `SKILL.md` files will be scanned.
 
 ## Usage
 
 ### Ask Your Agent
 > "Run a skill audit"
 > "Check my skills for issues"
-> "Which skills need updates?"
 > "Do I have a skill issue?"
 
 ### CLI
 ```bash
-node skill-issue/scripts/audit.mjs
-```
+# Scan default ./skills directory
+node scripts/audit.mjs
 
-### With Custom Paths
-```bash
-# Set custom skill directories (comma-separated)
-SKILL_DIRS="./skills,/opt/homebrew/lib/node_modules/clawdbot/skills" \
-MEMORY_DIR="./memory" \
-node skill-issue/scripts/audit.mjs
+# Scan multiple directories
+SKILL_DIRS="./skills,./other-skills" node scripts/audit.mjs
+
+# Scan with usage tracking from your logs
+SKILL_DIRS="./skills" MEMORY_DIR="./logs" node scripts/audit.mjs
 ```
 
 ## Configuration
 
-All paths are configurable via environment variables:
-
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SKILL_DIRS` | `./skills` | Comma-separated list of directories to scan for skills |
-| `MEMORY_DIR` | `./memory` | Directory with dated markdown logs (YYYY-MM-DD.md) for usage tracking |
-| `AUDIT_DAYS` | `7` | Number of days back to scan for usage |
+| `SKILL_DIRS` | `./skills` | Comma-separated directories to scan |
+| `MEMORY_DIR` | `./memory` | Directory with dated markdown logs (`YYYY-MM-DD.md`) for usage tracking |
+| `AUDIT_DAYS` | `7` | How far back to scan for usage |
+| `SKIP_HUB` | `false` | Set to `1` to skip ClawdHub version checks |
 
-The audit looks for subdirectories containing a `SKILL.md` file with YAML frontmatter. Any directory structure that follows this pattern will work:
+## What It Scans
+
+The auditor looks for subdirectories containing a `SKILL.md` with YAML frontmatter:
 
 ```
 skills/
 ├── my-skill/
-│   └── SKILL.md      ← has name, description, metadata
+│   └── SKILL.md
 ├── another-skill/
 │   └── SKILL.md
 ```
 
-## SKILL.md Format
-
-The auditor reads standard SKILL.md frontmatter:
+### SKILL.md Format
 
 ```yaml
 ---
 name: my-skill
 description: "What this skill does"
-metadata: {"clawdbot":{"emoji":"🔧","requires":{"bins":["curl","jq"],"env":["API_KEY"]}}}
+metadata: {"requires":{"bins":["curl","jq"],"env":["API_KEY"]}}
 ---
 ```
 
-- **`name`** — Skill identifier
-- **`description`** — What it does
-- **`metadata.clawdbot.requires.bins`** — Required CLI tools (checked via `which`)
-- **`metadata.clawdbot.requires.env`** — Required environment variables
+If `requires.bins` lists CLI tools, the audit checks they're installed. If `requires.env` lists env vars, it checks they're set.
 
 ## Sample Output
 
@@ -103,37 +86,35 @@ metadata: {"clawdbot":{"emoji":"🔧","requires":{"bins":["curl","jq"],"env":["A
 
 ## Summary
 - Total skills: 12
-- ✅ Keep: 5
-- 🔎 Review: 4
-- 🗑️ Remove: 3
+- ✅ Keep: 5       (active + healthy)
+- 🔎 Review: 4    (unused — maybe remove?)
+- 🗑️ Remove: 3    (broken dependencies)
 
 ## Detailed Report
-| # | Skill       | Source    | Bins     | Usage (7d) | Health | Rec       |
-|---|-------------|----------|----------|------------|--------|-----------|
-| 1 | 🌤️ weather  | ./skills | curl     | 📊 5       | ✅     | ✅ keep   |
-| 2 | 🗣️ sag      | ./skills | sag      | —          | ⚠️ env | 🔎 review |
-| 3 | 📧 himalaya | ./skills | himalaya | 📊 8       | ✅     | ✅ keep   |
+| # | Skill       | Bins     | Usage (7d) | Health | Rec       |
+|---|-------------|----------|------------|--------|-----------|
+| 1 | 🌤️ weather  | curl     | 📊 5       | ✅     | ✅ keep   |
+| 2 | 🗣️ voice    | sag      | —          | ❌ sag | 🗑️ remove |
+| 3 | 📧 email    | himalaya | 📊 8       | ✅     | ✅ keep   |
 
 ## ⚠️ Skills Needing Attention
-- **broken-skill** — 🗑️ Missing: `sometool` not found
+- **voice** — 🗑️ Missing: `sag` not found. Install or remove.
 ```
 
 ## How It Works
 
-1. Scans each directory in `SKILL_DIRS` for subdirectories containing `SKILL.md`
-2. Parses YAML frontmatter for skill metadata
-3. Checks if required binaries exist (`which <bin>`)
-4. Checks if required environment variables are set
-5. Scans dated markdown files in `MEMORY_DIR` for skill name mentions
-6. If `clawdhub` CLI is available, checks for newer versions
-7. Produces a markdown report with recommendations
+1. Scans `SKILL_DIRS` for subdirectories with `SKILL.md`
+2. Parses YAML frontmatter for metadata
+3. Runs `which` on each required binary
+4. Checks `process.env` for required variables
+5. Scans dated `.md` files in `MEMORY_DIR` for skill name mentions
+6. Outputs a markdown report with per-skill recommendations
 
-**Read-only.** The audit never modifies, installs, or removes anything.
+**Read-only.** Never modifies, installs, or removes anything.
 
 ## Requirements
 
 - Node.js 18+
-- `clawdhub` CLI (optional — for version checks)
 
 ## License
 

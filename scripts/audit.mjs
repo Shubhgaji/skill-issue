@@ -137,7 +137,8 @@ async function checkUsage(skillName) {
 }
 
 function checkHealth(meta) {
-  const requires = getNestedField(meta, "clawdbot.requires") || {};
+  // Support both nested (clawdbot.requires) and flat (requires) formats
+  const requires = getNestedField(meta, "clawdbot.requires") || meta.requires || {};
   const bins = requires.bins || [];
   const envs = requires.env || [];
 
@@ -191,11 +192,12 @@ async function main() {
   // Process each skill
   const results = [];
   for (const skill of allSkills) {
-    const emoji = getNestedField(skill.meta, "clawdbot.emoji") || "";
+    const emoji = getNestedField(skill.meta, "clawdbot.emoji") || skill.meta?.emoji || "";
     const health = checkHealth(skill.meta);
     const usage = await checkUsage(skill.dirName);
     const hub = hubAvailable ? await checkHubVersion(skill.dirName) : { available: false, version: "n/a" };
-    const bins = (getNestedField(skill.meta, "clawdbot.requires.bins") || []).join(", ") || "—";
+    const reqBins = getNestedField(skill.meta, "clawdbot.requires.bins") || skill.meta?.requires?.bins || [];
+    const bins = reqBins.join(", ") || "—";
 
     // Determine recommendation
     let rec;
